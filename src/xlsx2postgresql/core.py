@@ -52,11 +52,15 @@ class XLSXFile:
 
     def create_tables(self):
         for name, col_types in zip(self.sheet_names, self.col_types):
+            n_name = normalize_identifier(name)
+
             xl_sheet = self.wb.sheet_by_name(name)
             labels_row = xl_sheet.row(get_header_row(xl_sheet))
             labels = [normalize_identifier(s.value) for s in labels_row]
 
-            ret = f"CREATE TABLE IF NOT EXISTS {normalize_identifier(name)} (\n"
+            ret = ""
+            ret += f"DROP TABLE IF EXISTS {n_name};"
+            ret += f"CREATE TABLE IF NOT EXISTS {n_name} (\n"
 
             mret = []
             for l, c in zip(labels, col_types):
@@ -73,20 +77,20 @@ class XLSXFile:
             labels_row = get_header_row(xl_sheet)
 
             for row in range(labels_row + 1, xl_sheet.nrows):
-                res = f"INSERT INTO f{n_name} VALUES(\n"
+                res = f"INSERT INTO {n_name} VALUES(\n"
                 data = xl_sheet.row(row)
                 values = [d.value for d in data]
                 mres = []
                 for v, t in zip(values, col_types):
+                    if v == "":
+                        mres.append("\tNULL")
+                        continue
+
                     if t == "text":
                         mres.append("\t'%s'" % v)
                     elif t == "numeric":
                         mres.append("\t'%s'" % v)
                     elif t == "timestamp":
-                        if v == "":
-                            mres.append("\tNULL")
-                            continue
-
                         v = datetime(*xlrd.xldate_as_tuple(v, self.wb.datemode))
                         mres.append("\t'%s'" % v)
                     else:
