@@ -11,5 +11,10 @@ def test_file_path():
 
 
 @pytest.fixture
+def test_file_2_path():
+    return os.path.join(os.path.dirname(__file__), "testdata_2.xlsx")
+
+
+@pytest.fixture
 def xlsxfile(test_file_path):
     return XLSXFile(test_file_path)

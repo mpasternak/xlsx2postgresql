@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime
 
 import xlrd
@@ -57,6 +58,13 @@ class XLSXFile:
             xl_sheet = self.wb.sheet_by_name(name)
             labels_row = xl_sheet.row(get_header_row(xl_sheet))
             labels = [normalize_identifier(s.value) for s in labels_row]
+
+            # Rename double labels to label_n
+            seen_labels = defaultdict(lambda: 0)
+            for no, label in enumerate(labels):
+                seen_labels[label] += 1
+                if seen_labels[label] > 1:
+                    labels[no] = f"{label}_{seen_labels[label]}"
 
             ret = ""
             ret += f"DROP TABLE IF EXISTS {n_name};"
